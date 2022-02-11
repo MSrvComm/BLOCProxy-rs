@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.21"
-async-std = { version = "1.10.0", features = ["attributes"] }
-actix-web = "3.3.3"
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+actix-web = "3"
 reqwest = "0.11.9"
+anyhow = "1.0.53"
+thiserror = "1.0.30"
