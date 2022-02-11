@@ -2,7 +2,10 @@ const CLIENTPORT: &str = "5000";
 const PROXYINPORT: &str = "62081"; // which port will the reverse proxy use for making outgoing request
 const PROXYOUTPORT: &str = "62082"; // which port the reverse proxy listens on
 
-use std::{time::Duration, io::{self, BufReader, BufWriter}, borrow::Borrow};
+use std::{
+    io::{self, BufReader, BufWriter},
+    time::Duration,
+};
 
 use actix_web::{get, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use futures::future;
@@ -34,7 +37,7 @@ async fn get_out(req: HttpRequest, data: web::Data<OutUrl>) -> impl Responder {
     println!("outgoing uri: {}", uri);
 
     let request = Request::new(Method::GET, uri);
-    let client = &data.client;init
+    let client = &data.client;
 
     // TODO: hot mess: needs cleaning
     match client.execute(request).await {
@@ -47,8 +50,7 @@ async fn get_out(req: HttpRequest, data: web::Data<OutUrl>) -> impl Responder {
             let body = w.into_inner().unwrap();
             HttpResponse::Ok().body(body)
         }
-        Err(e) => HttpResponse::InternalServerError()
-            .body(format!("Error requesting path: {}", e)),
+        Err(e) => HttpResponse::InternalServerError().body(format!("Error requesting path: {}", e)),
     }
 }
 
