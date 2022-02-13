@@ -1,5 +1,6 @@
-pub(crate) async fn getEndpoints(svc: &str) {
-    println!("{}", reqwest::get(format!("http://epwatcher:62000/{}", svc))
+pub(crate) async fn get_endpoints(svc: String) {
+    // println!("{}", reqwest::get(format!("http://epwatcher:62000/{}", svc))
+    println!("{}", reqwest::get(format!("http://localhost:30000/{}", svc))
         .await
         .unwrap()
         .text()
