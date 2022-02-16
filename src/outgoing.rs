@@ -2,33 +2,49 @@ use actix_web::{http::HeaderMap, web, HttpRequest, HttpResponse, Responder};
 use reqwest::{Method, Request, Url};
 
 use crate::{
-    controllercom::get_endpoints,
-    utils::{respond, OutUrl},
+    mgr::Service,
+    utils::{respond, OutData},
 };
 
-pub(crate) async fn get_out(req: HttpRequest, data: web::Data<OutUrl>) -> impl Responder {
+pub(crate) async fn get_out(req: HttpRequest, data: web::Data<OutData>) -> impl Responder {
     let mut headermap = HeaderMap::new();
     for (key, val) in req.headers() {
         headermap.insert(key.clone(), val.clone());
     }
 
-    let uri = &req.uri().to_string()[1..];
-    let svc = match uri.split("/").nth(0) {
-        Some(svc) => svc,
-        None => return HttpResponse::BadRequest().body("Error extracting service"),
-    };
-    println!("svc: {}", svc);
+    println!("remote hostname: {:#?}", req.connection_info().host());
+    let path_str = &req.path().to_owned();
+    let path = String::from_utf8_lossy(&path_str.as_bytes()[1..]);
 
-    let uri = Url::parse(&format!("{}{}", data.url.as_str(), &uri)).unwrap();
+    let conn = req.connection_info();
+    let svc = match conn.host().split(":").nth(0) {
+        Some(svc) => svc,
+        None => {
+            return HttpResponse::InternalServerError().body(format!("Invalid service requested"))
+        }
+    };
+
+    println!("service: {}", svc);
+
+    let query = req.query_string();
+    let uri = match query {
+        "" => Url::parse(&format!("{}{}", data.url.as_str(), path)).unwrap(),
+        _ => Url::parse(&format!(
+            "{}{}?{}",
+            data.url.as_str(),
+            path,
+            req.query_string()
+        ))
+        .unwrap(),
+    };
     println!("outgoing uri: {}", uri);
 
     let client = &data.out_client.clone();
     let request = Request::new(Method::GET, uri);
 
-    // how do you handle the error
-    // when an async call like get_endpoints(svc.to_string()).await fails?
-    // it won't crash but returns an empty error back
-    async_std::task::spawn(get_endpoints(svc.to_string())).await;
+    // get backends
+    let backends = Service::get_backends(svc);
+    println!("{:#?}", backends);
 
     let handle = async_std::task::spawn(client.execute(request));
     let res = match handle.await {

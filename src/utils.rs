@@ -1,13 +1,18 @@
-use std::io::{BufWriter, BufReader, self};
+use std::{io::{BufWriter, BufReader, self}, sync::Arc};
 
 use actix_web::{HttpResponse, error};
+use async_std::channel::Sender;
 use reqwest::{Response, Client, Url};
 use thiserror::Error;
 
+use crate::mgr::{Mgr, Service};
+
 #[derive(Clone)]
-pub(crate) struct OutUrl {
+pub(crate) struct OutData {
     pub(crate) url: Url,
     pub(crate) out_client: Client,
+    pub(crate) mgr: Arc<Mgr>,
+    pub(crate) sender: Sender<Service>,
 }
 
 #[derive(Clone)]
